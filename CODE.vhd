@@ -6,7 +6,7 @@ use ieee.std_logic_arith.all;
 use IEEE.numeric_std.all;
 use IEEE.math_real.all;
 
-entity ALUdesign is
+entity div84 is
 port(a : in std_logic_vector(7 downto 0);
 b : in std_logic_vector(7 downto 0);
 o  : out std_logic_vector(15 downto 0);
@@ -16,14 +16,38 @@ zeroflg : out std_logic;
 cyflg : out std_logic);
 end entity;
 
-architecture add of ALUdesign is
+architecture add of div84 is
 
 signal i : std_logic_vector(8 downto 0);
 signal y : std_logic_vector(8 downto 0);
 signal z : std_logic_vector(8 downto 0);
-begin
 
+procedure div4( -- Division procedure Starts
+numer : in std_logic_vector(7 downto 0);
+denom : in std_logic_vector(3 downto 0);
+quotient : out std_logic_vector(3 downto 0);
+remainder : out std_logic_vector(3 downto 0)) is
+variable d,n1: std_logic_vector(4 downto 0);
+variable n2: std_logic_vector(3 downto 0);
+begin
+d := '0' & denom;
+n2 := numer(3 downto 0);
+n1 := '0' & numer(7 downto 4);
+for i in 0 to 3 loop
+     n1 := n1(3 downto 0) & n2(3);
+	  n2 := n2(2 downto 0) & '0';
+	  if n1 >= d then
+	         n1 := n1 - d;
+				n2(0) := '1';
+		end if;		
+end loop;
+quotient := n2;
+remainder := n1(3 downto 0);
+end procedure;	-- Division Procedure Ends
+
+begin
 process(a,b,s)
+variable remH,remL,quotL,quotH: std_logic_vector(3 downto 0);
 variable pv,bp : std_logic_vector(15 downto 0);
 begin
 
@@ -138,7 +162,18 @@ for i in 0 to 7 loop
 	  zeroflg <= '0';
 	  end if;
 	  overflow <= '0';
-end if;
+
+elsif s = "110" then -- division
+
+div4("0000" & a(7 downto 4),b(3 downto 0),quotH,remH);
+div4(remH & a(3 downto 0),b(3 downto 0),quotL,remL);
+
+o(15 downto 8) <= "00000000";
+o(7 downto 4) <= quotH;
+o(3 downto 0) <= quotL;
+--	 remainder <= remL;
+	 
+end if;	 
 end process;
 end add;
 
